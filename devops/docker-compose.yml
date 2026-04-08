@@ -1,0 +1,67 @@
+services:
+  otc-rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: otc-rabbitmq
+    hostname: otc-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: pass123
+    volumes:
+      - otc-rabbitmq:/var/lib/rabbitmq
+    networks:
+      - outboxtocache
+    labels:
+      - "dev.orbstack.http-port=15672"
+
+  otc-postgres:
+    image: postgres:18-alpine
+    container_name: otc-postgres
+    restart: unless-stopped
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: pass123
+      POSTGRES_DB: appdb
+    volumes:
+      - otc-postgres:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appuser -d appdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - outboxtocache
+    labels:
+      - "dev.orbstack.http-port=5435"
+
+  otc-redis:
+    image: redis:8-alpine
+    container_name: otc-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    command: redis-server --requirepass redispass123 --appendonly yes
+    volumes:
+      - otc-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redispass123", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - outboxtocache
+
+volumes:
+  otc-rabbitmq:
+  otc-postgres:
+  otc-redis:
+
+networks:
+  outboxtocache:
+    driver: bridge

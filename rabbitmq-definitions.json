@@ -1,0 +1,59 @@
+{
+    "exchanges": [
+        {
+            "name": "ex.game",
+            "vhost": "/",
+            "type": "topic",
+            "durable": true,
+            "auto_delete": false,
+            "arguments": {}
+        },
+        {
+            "name": "ex.game.dlx",
+            "vhost": "/",
+            "type": "fanout",
+            "durable": true,
+            "auto_delete": false,
+            "arguments": {}
+        }
+    ],
+    "queues": [
+        {
+            "name": "q.game.card-updated",
+            "vhost": "/",
+            "durable": true,
+            "auto_delete": false,
+            "arguments": {
+                "x-dead-letter-exchange": "ex.game.dlx"
+            }
+        },
+        {
+            "name": "q.game.dlq",
+            "vhost": "/",
+            "durable": true,
+            "auto_delete": false,
+            "arguments": {
+                "x-message-ttl": 604800000,
+                "x-max-length": 10000
+            }
+        }
+    ],
+    "bindings": [
+        {
+            "source": "ex.game",
+            "vhost": "/",
+            "destination": "q.game.card-updated",
+            "destination_type": "queue",
+            "routing_key": "game.card.updated",
+            "arguments": {}
+        },
+        {
+            "source": "ex.game.dlx",
+            "vhost": "/",
+            "destination": "q.game.dlq",
+            "destination_type": "queue",
+            "routing_key": "",
+            "arguments": {}
+        }
+    ]
+}
